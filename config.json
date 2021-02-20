@@ -1,0 +1,22 @@
+{
+    "spesification": {
+        "steps-per-rotation": 200,
+        "lead-screw-linear-motion-per-rotation": 8,
+        "points-per-mm": 2.83465,
+        "z-safe-height": 40,
+        "stepper": {
+            "x": {
+                "stp": 11,
+                "dir": 12
+            },
+            "y": {
+                "stp": 13,
+                "dir": 15
+            },
+            "z": {
+                "stp": 16,
+                "dir": 18
+            }
+        }
+    }
+}
