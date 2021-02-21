@@ -83,4 +83,4 @@ class CoordinateTrace:
         ct.close()
 
 
-CoordinateTrace.convert_xml('example.xml', 'test.ct')
+CoordinateTrace.convert_xml('example.xml', 'example.ct')
