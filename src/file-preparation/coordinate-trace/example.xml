@@ -1,0 +1,22 @@
+<data>
+    <metadata>
+        <name>Example File</name>
+    </metadata>
+    <print>
+        <routines>
+            <define>
+                <id>lift-up</id>
+                <actions>
+                    <pos>+0,+0,+40</pos>
+                </actions>
+            </define>
+        </routines>
+        <sequence>
+            <pos>0,0,0</pos>
+            <routine>lift-up</routine>
+            <pos>1,1,1</pos>
+            <pos>10,15,32</pos>
+            <pos>5,20,-6</pos>
+        </sequence>
+    </print>
+</data>
