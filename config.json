@@ -1,5 +1,5 @@
 {
-    "spesification": {
+    "specification": {
         "steps-per-rotation": 200,
         "lead-screw-linear-motion-per-rotation": 8,
         "points-per-mm": 2.83465,

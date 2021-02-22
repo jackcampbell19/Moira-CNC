@@ -3,24 +3,21 @@ import xml.etree.ElementTree as et
 
 class CoordinateTrace:
 
-    def __init__(self, path, name):
+    def __init__(self, path):
         self.file = open(path, 'w')
-        self.writeline(f"n {name}")
-        self.writeline('{')
 
     def add_coordinate(self, xyz):
         x, y, z = xyz
-        self.writeline(f"{x},{y},{z}")
+        self.writeline(f"c {x},{y},{z}")
 
     def writeline(self, line):
         self.file.writelines([line, '\n'])
 
     def close(self):
-        self.writeline('}')
         self.file.close()
 
     @staticmethod
-    def convert_xml(xml_path, ct_path):
+    def from_ctxml(xml_path, ct_path):
         xml = et.parse(xml_path)
         root = xml.getroot()
         metadata = root.find('metadata')
@@ -33,7 +30,7 @@ class CoordinateTrace:
         if sequence is None:
             raise Exception(f"[ERROR] <sequence> tag missing.")
         routines = prnt.find('routines')
-        ct = CoordinateTrace(ct_path, metadata.find('name').text)
+        ct = CoordinateTrace(ct_path)
 
         routine_map = {}
         if routines is not None:
@@ -81,6 +78,3 @@ class CoordinateTrace:
                 raise Exception(f"[ERROR] Unexpected child tag of <sequence>: <{child.tag}>")
 
         ct.close()
-
-
-CoordinateTrace.convert_xml('example.xml', 'example.ct')
