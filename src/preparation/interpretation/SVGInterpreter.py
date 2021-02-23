@@ -8,7 +8,7 @@ import re
 from Specification import points_to_steps
 import sys
 
-sys.path.append('../ct')
+sys.path.append('../mi')
 from CTXML import CTXML
 
 

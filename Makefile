@@ -1,5 +1,5 @@
 test:
-	python3 tst/preparation/ct/ct_test.py
+	python3 tst/preparation/mi/mi_test.py
 
 clean:
 	rm tst/runtime/*
