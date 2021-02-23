@@ -214,10 +214,10 @@ class SVGInterpreter:
         ctxml.add_routine('pen-up')
         item = self.next()
         while item:
-            ctxml.add_pos(f"{item[0][0]},{item[0][1]},+0")
+            ctxml.add_coordinate(f"{item[0][0]},{item[0][1]},+0")
             ctxml.add_routine('pen-down')
             for c in item[1:]:
-                ctxml.add_pos(f"{c[0]},{c[1]},+0")
+                ctxml.add_coordinate(f"{c[0]},{c[1]},+0")
             ctxml.add_routine('pen-up')
             item = self.next()
         ctxml.close()

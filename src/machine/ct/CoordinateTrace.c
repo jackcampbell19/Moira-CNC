@@ -21,7 +21,7 @@ void ct_close(CoordinateTrace* ct) {
 
 void ct_parse_coord(CoordinateTrace* ct, int* x, int* y, int* z) {
     char *p;
-    p = strtok(ct->line, ",");
+    p = strtok(&ct->line[2], ",");
     *x = atoi(p);
     p = strtok(NULL, ",");
     *y = atoi(p);
@@ -31,20 +31,16 @@ void ct_parse_coord(CoordinateTrace* ct, int* x, int* y, int* z) {
 
 int main(void) {
     CoordinateTrace ct;
-    char path[] = "example.ct";
+    char path[] = "../../preparation/ct/example.ct";
     ct_init(&ct, path);
     while (ct_nextline(&ct)) {
-        if (ct.line[0] == 'n')
-            printf("Name: %s\n", ct.line);
-        if (ct.line[0] == '{') {
-            while (ct_nextline(&ct) && ct.line[0] != '}') {
-                int x;
-                int y;
-                int z;
-                ct_parse_coord(&ct, &x, &y, &z);
-                printf("Coord: %d, %d, %d\n", x, y, z);
-            }
-            break;
+        // If the line contains a coordinate
+        if (ct.line[0] == 'c') {
+            int x;
+            int y;
+            int z;
+            ct_parse_coord(&ct, &x, &y, &z);
+            printf("Coord: %d, %d, %d\n", x, y, z);
         }
     }
     ct_close(&ct);

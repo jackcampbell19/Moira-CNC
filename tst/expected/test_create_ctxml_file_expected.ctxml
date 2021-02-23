@@ -1,0 +1,22 @@
+<?xml version="1.0" ?>
+<data>
+	<metadata/>
+	<print>
+		<routines>
+			<define>
+				<id>lift-up</id>
+				<actions>
+					<coordinate>+0,+0,40</coordinate>
+				</actions>
+			</define>
+		</routines>
+		<sequence>
+			<coordinate>10,25,14</coordinate>
+			<coordinate>20,-10,+6</coordinate>
+			<coordinate>5,5,5</coordinate>
+			<routine>lift-up</routine>
+			<coordinate>10,20,30</coordinate>
+			<coordinate>+0,-1,+1</coordinate>
+		</sequence>
+	</print>
+</data>
