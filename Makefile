@@ -3,3 +3,7 @@ test:
 
 clean:
 	rm tst/runtime/*
+	rm main
+
+build:
+	gcc -o main src/machine/*/*.c src/machine/*.c

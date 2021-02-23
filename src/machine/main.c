@@ -7,12 +7,12 @@
  * initilizes its functionality.
 */
 int main(int argc, char *argv[]) {
-    CNC* cnc = (CNC*) malloc(sizeof(CNC));
-    cnc_init(cnc);
+    CNC cnc;
+    cnc_init(&cnc);
     if (argc != 2) {
         return 1;
     }
-    // TODO: create ct file
-    
+    char* path = argv[1];
+    cnc_run_ct(&cnc, path);
     return 0;
 }

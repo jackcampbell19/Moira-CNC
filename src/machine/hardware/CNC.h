@@ -19,6 +19,7 @@ typedef struct {
 
 void cnc_init(CNC* cnc);
 void cnc_set_position(CNC* cnc, Vector* new_position);
+void cnc_run_ct(CNC* cnc, char* path);
 
 
 #endif // CNC_DEF

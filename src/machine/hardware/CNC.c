@@ -3,6 +3,8 @@
 #include "../vector/Vector.h"
 #include "Stepper.h"
 #include <unistd.h>
+#include "../ct/CoordinateTrace.h"
+
 
 /**
  * Init the CNC device. Pulls specs from spesification file and sets up the various components.
@@ -35,4 +37,21 @@ void cnc_set_position(CNC* cnc, Vector* new_position) {
         usleep(8000);
     }
     vector_copy(&cnc->current_position, new_position);
+}
+
+
+void cnc_run_ct(CNC* cnc, char* path) {
+    CoordinateTrace ct;
+    ct_init(&ct, path);
+    while (ct_nextline(&ct)) {
+        // If the line contains a coordinate
+        if (ct.line[0] == 'c') {
+            int x;
+            int y;
+            int z;
+            ct_parse_coord(&ct, &x, &y, &z);
+            printf("Coord: %d, %d, %d\n", x, y, z);
+        }
+    }
+    ct_close(&ct);
 }

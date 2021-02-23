@@ -28,20 +28,3 @@ void ct_parse_coord(CoordinateTrace* ct, int* x, int* y, int* z) {
     p = strtok(NULL, ",");
     *z = atoi(p);
 }
-
-int main(void) {
-    CoordinateTrace ct;
-    char path[] = "../../preparation/ct/example.ct";
-    ct_init(&ct, path);
-    while (ct_nextline(&ct)) {
-        // If the line contains a coordinate
-        if (ct.line[0] == 'c') {
-            int x;
-            int y;
-            int z;
-            ct_parse_coord(&ct, &x, &y, &z);
-            printf("Coord: %d, %d, %d\n", x, y, z);
-        }
-    }
-    ct_close(&ct);
-}
