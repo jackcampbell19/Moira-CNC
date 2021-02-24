@@ -7,3 +7,6 @@ clean:
 
 build:
 	gcc -o main src/machine/*/*.c src/machine/*.c
+
+run:
+	./main tst/expected/test_1_mi_file_expected.mi

@@ -1,15 +1,13 @@
 #if !defined(STEPPER_DEF)
 #define STEPPER_DEF
 
-
-typedef struct {
+struct Stepper_ {
     int stp;
     int dir;
-} Stepper;
-
+};
+typedef struct Stepper_ Stepper;
 
 void stepper_construct(Stepper* stepper, int stp, int dir);
 void stepper_step(Stepper* stepper, int direction);
-
 
 #endif // STEPPER_DEF

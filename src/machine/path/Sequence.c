@@ -2,6 +2,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include "../vector/Vector.h"
 
 /**
  * Calculates sequence of steps to take to draw a line with a given x, y, z coordinates from s to e.

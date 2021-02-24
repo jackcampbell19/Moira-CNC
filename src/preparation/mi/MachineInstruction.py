@@ -1,10 +1,14 @@
 class MachineInstruction:
 
     def __init__(self, path):
-        self.file = open(path, 'w')
+        self.path = path
+        self.instructions = []
+        self.defined_routine_count = 0
 
     def append_instruction(self, instruction):
-        self.file.writelines(instruction)
+        if instruction[0] and 'R' in instruction[0]:
+            self.defined_routine_count += 1
+        self.instructions.append(instruction)
 
     @staticmethod
     def coordinate(xyz):
@@ -26,5 +30,9 @@ class MachineInstruction:
     def wait(milliseconds):
         return f"w {milliseconds}\n"
 
-    def close(self):
-        self.file.close()
+    def build(self):
+        file = open(self.path, 'w')
+        file.writelines([f"D {self.defined_routine_count}\n"])
+        for instruction in self.instructions:
+            file.writelines(instruction)
+        file.close()

@@ -9,9 +9,14 @@ Coordinate trace files instruct the CNC with a sequence of instructions. They ha
 Type `Empty line`
 Execution `All empty lines are skipped.`
 
+Type `D`  
+Payload `count` type `int`  
+Example `D 1`  
+Execution `The number of defined routines in the file.`
+
 Type `R`  
 Payload `id:count` type `int:int`  
-Example `D 0:2`  
+Example `R 0:2`  
 Execution `Defines a routine with the 'id' given that will span the subsequent 'count' instructions.`
 
 Type `c`  

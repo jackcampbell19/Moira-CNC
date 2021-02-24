@@ -1,11 +1,12 @@
 #ifndef VECTOR_H_
 #define VECTOR_H_
 
-typedef struct {
+struct Vector_ {
     double x;
     double y;
     double z;
-} Vector;
+};
+typedef struct Vector_ Vector;
 
 void vector_print(Vector* v);
 void vector_construct(Vector* v, double x, double y, double z);

@@ -13,6 +13,6 @@ int main(int argc, char *argv[]) {
         return 1;
     }
     char* path = argv[1];
-    cnc_run_ct(&cnc, path);
+    cnc_run_mi(&cnc, path);
     return 0;
 }
