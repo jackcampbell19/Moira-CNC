@@ -1,3 +1,3 @@
-#include "../src/hardware/CNC.h"
+#include "../"
 
 void init_test_cnc(CNC* cnc, )

@@ -26,7 +26,7 @@ class MITests(Test):
         mi.append_instruction(MachineInstruction.special_instruction(0, '3,180,50'))
         mi.append_instruction(MachineInstruction.wait(1000))
         mi.build()
-        return self.compare_files(file_location, f"{cur_dir}/../../expected/test_1_mi_file_expected.mi")
+        return self.compare_files(file_location, f"{cur_dir}/../../files/test_1_mi_file_expected.mi")
 
 
 if __name__ == '__main__':
