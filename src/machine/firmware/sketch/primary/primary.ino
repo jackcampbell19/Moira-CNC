@@ -1,26 +1,47 @@
 #include <stdlib.h>
 #include <string.h>
-#include "State.h"
 #include "SDCard.h"
-#include "MachineLog.h"
+#include "CNC.h"
+#include "RotaryEncoder.h"
+#include "Console.h"
+#include "ConsoleScreen.h"
+#include "ConsoleItem.h"
 
 
 // Define variables
-MachineLog mlog;
-State state;
 SDCard sd_card;
+CNC cnc(0, 1, 2, 3, 4, 5);
+RotaryEncoder rotenc(33, 34, 35);
 
+void print_hi() {
+  Serial.println("hi");
+}
+void print_hello() {
+  Serial.println("hello");
+}
+
+char hn[16] = "Print Hi";
+ConsoleItem printHi(hn, print_hi);
+char hn2[16] = "P Hello";
+ConsoleItem pH(hn2, print_hello);
+// Add items
+ConsoleScreen home;
+
+Console console(13, 14, 15, 16, 17, 18, &home);
 
 /**
  * Lifecycle: setup
  * Runs once upon board initilization.
 */
 void setup() {
-  // Set the state
-  state.set(state.INIT);
   // Open serial communications and wait for port to open
   Serial.begin(9600);
   while (!Serial) {}
+  // Setup console screens
+  home.addItem(&printHi);
+  home.addItem(&pH);
+  // Render initial screen
+  console.render_screen();
 }
 
 
@@ -29,48 +50,51 @@ void setup() {
  * Continuiously executes this code block.
 */
 void loop() {
-  // Set the state and wait for the SD card to be inserted
-  mlog.write("Waiting for SD card...");
-  state.set(state.WAITING_FOR_SD);
+  // Get the state of the rotary encoder
+  int state = rotenc.get_state();
+  // Check the state of the rotary encoder
+  if (state == rotenc.BUTTON_PRESSED) {
+    console.select();
+  } else if (state == rotenc.ROTATE_LEFT) {
+    console.up();
+  } else if (state == rotenc.ROTATE_RIGHT) {
+    console.down();
+  }
+  delay(1);
+}
+
+
+/**
+ * Runs a '.mi' file from the sd card.
+*/
+void run_mi_file() {
+  // Wait for the SD card to be inserted
+  // display.message("Waiting for SD card...");
   while (!sd_card.is_inserted()) {};
   // Set the state and init SD card root
-  mlog.write("SD card detected.");
-  state.set(state.SD_INSERTED);
+  // display.message("SD card detected.");
   sd_card.init_root();
   // Get the filename of the file to execute
   char filename[128];
   if (!sd_card.find_mi(filename)) {
     // If there is an error getting the filename
-    mlog.write("[ERROR] Failed to file '.mi' file on SD.");
-    state.set(state.ERROR);
-    wait_for_reset();
+    // display.error("[ERROR] Failed to file '.mi' file on SD.");
     return;
   }
-  mlog.write("Found '.mi' file.");
-  mlog.write(filename);
+  // display.message("Found '.mi' file.");
   // Open the file
   if (!sd_card.open_mi(filename)) {
     // If the file cannot be opened
-    mlog.write("[ERROR] Could not open '.mi' file.");
-    state.set(state.ERROR);
-    wait_for_reset();
+    // display.error("[ERROR] Could not open '.mi' file.");
     return;
   }
   // Read the instruction
   int bufsize = 64;
   char instruction[bufsize];
   while (sd_card.get_next_instruction(instruction, bufsize)) {
-    mlog.write(instruction);
+    // display.message(instruction);
+    cnc.execute_instruction(instruction);
   }
   // Wait for for user.
-  mlog.write("Program ended, waiting for user to reset.");
-  wait_for_reset();
-}
-
-
-/**
- * Waits for the user to reset.
-*/
-void wait_for_reset() {
-  while (true) {};
+  // display.message("Program ended, press button to reset");
 }
