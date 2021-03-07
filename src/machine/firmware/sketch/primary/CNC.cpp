@@ -7,17 +7,17 @@
 CNC::CNC(int x_stp, int x_dir, int y_stp, int y_dir, int z_stp, int z_dir) : x(x_stp, x_dir), y(y_stp, y_dir), z(z_stp, z_dir) {}
 
 
-void CNC::execute_instruction(char* instruction) {
+void CNC::executeInstruction(char* instruction) {
 	// Execute 'coordinate' instruction
     if (instruction[0] == 'c') {
         Coordinate coordinate;
-        this->parse_coordinate_instruction(instruction, &coordinate);
-        this->set_position(coordinate);
+        this->parseCoordinateInstruction(instruction, &coordinate);
+        this->setPosition(coordinate);
         return;
     }
     // Execute 'wait' instruction
     if (instruction[0] == 'w') {
-        int milliseconds = this->parse_wait_instruction(instruction);
+        int milliseconds = this->parseWaitInstruction(instruction);
         delay(milliseconds);
         return;
     }
@@ -32,7 +32,7 @@ void CNC::execute_instruction(char* instruction) {
 /**
  * Rotates the motors to the given positions syncronously, returns when motors have stopped.
 */
-void CNC::set_position(Coordinate coordinate) {
+void CNC::setPosition(Coordinate coordinate) {
 	this->x.setTargetAbs(coordinate.x);
 	this->y.setTargetAbs(coordinate.y);
 	this->z.setTargetAbs(coordinate.z);
@@ -43,11 +43,11 @@ void CNC::set_position(Coordinate coordinate) {
 }
 
 
-int CNC::parse_wait_instruction(char* instruction) {
+int CNC::parseWaitInstruction(char* instruction) {
     return (int) atoi(&instruction[2]);
 }
 
-void CNC::parse_coordinate_instruction(char* instruction, Coordinate* coordinate) {
+void CNC::parseCoordinateInstruction(char* instruction, Coordinate* coordinate) {
     char *raw_str;
     // Advance the string past the instruction type and tokenize with comma
     raw_str = strtok(&instruction[2], ",");
@@ -77,4 +77,22 @@ void CNC::parse_coordinate_instruction(char* instruction, Coordinate* coordinate
         // Else set y to y value
         coordinate->z = atoi(raw_str);
     }
+}
+
+void CNC::setOrigin() {
+    this->x.setPosition(0);
+    this->y.setPosition(0);
+    this->z.setPosition(0);
+}
+
+int CNC::getXpos() {
+    return this->x.getPosition();
+}
+
+int CNC::getYpos() {
+    return this->y.getPosition();
+}
+	
+int CNC::getZpos() {
+    return this->z.getPosition();
 }

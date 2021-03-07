@@ -1,5 +1,11 @@
 #pragma once
 
+/**
+ * Possible states of the rotaryEncoder, clockwise, counter clockwise, button press, and none
+*/
+enum RotaryEncoderState { CW = 0, CCW = 1, BP = 2, NONE = 3 };
+
+
 class RotaryEncoder {
 
   private:
@@ -14,10 +20,6 @@ class RotaryEncoder {
   public:
 
   RotaryEncoder(int clk, int dt, int sw);
-  int get_state();
-
-  int ROTATE_RIGHT = 0b001;
-  int ROTATE_LEFT = 0b010;
-  int BUTTON_PRESSED = 0b100;
+  RotaryEncoderState getState();
   
 };

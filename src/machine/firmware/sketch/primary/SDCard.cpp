@@ -13,13 +13,29 @@ SDCard::SDCard() {
 /**
  * Returns true if there is an SD card inserted.
 */
-int SDCard::is_inserted() {
+int SDCard::isInserted() {
 	return SD.begin(BUILTIN_SDCARD);
 }
 
 
-void SDCard::init_root() {
+void SDCard::initRoot() {
 	this->root = SD.open("/");
+}
+
+size_t SDCard::getFilenames(char filenames[16][128]) {
+	size_t count = 0;
+  	while(true) {
+		File entry =  this->root.openNextFile();
+    	if (!entry)
+      		break;
+    	if (entry.isDirectory())
+      		continue;
+    	char* name = entry.name();
+    	strncpy(filenames[count], name, 16);
+    	entry.close();
+    	++count;
+  	}
+  	return count;
 }
 
 
@@ -27,7 +43,7 @@ void SDCard::init_root() {
  * Traverses over the root and gets the filename of the '.mi' file and copies it
  * to the filename parameter. Returns true if a file is found.
 */
-int SDCard::find_mi(char* filename) {
+int SDCard::findMi(char* filename) {
 	// Iterate over files
   	while(true) {
 		File entry =  this->root.openNextFile();
@@ -59,7 +75,7 @@ int SDCard::find_mi(char* filename) {
 }
 
 
-int SDCard::open_mi(char* filename) {
+int SDCard::openMi(char* filename) {
 	this->mi_file = SD.open(filename);
 	if (this->mi_file) {
 		return 1;
@@ -68,7 +84,7 @@ int SDCard::open_mi(char* filename) {
 }
 
 
-int SDCard::get_next_instruction(char* instruction, int bufsize) {
+int SDCard::getNextInstruction(char* instruction, int bufsize) {
 	// Reset the instruction
 	memset(instruction, '\0', bufsize);
 	// Read chars into the instruction until the newline char

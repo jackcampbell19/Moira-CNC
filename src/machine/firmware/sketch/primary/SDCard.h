@@ -15,10 +15,11 @@ class SDCard {
 	File mi_file;
 
 	SDCard();
-	int is_inserted();
-	void init_root();
-	int find_mi(char* filename);
-	int open_mi(char* filename);
-	int get_next_instruction(char* instruction, int bufsize);
+	int isInserted();
+	void initRoot();
+	int findMi(char* filename);
+	int openMi(char* filename);
+	int getNextInstruction(char* instruction, int bufsize);
+	size_t getFilenames(char filenames[48][128]);
 
 };
