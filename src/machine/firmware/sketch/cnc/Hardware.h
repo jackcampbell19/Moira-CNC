@@ -17,6 +17,7 @@ class Hardware {
 		Stepper x;
 		Stepper y;
 		Stepper z;
+		StepControl controller;
 
 		Screen* currentScreen;
 
@@ -34,6 +35,6 @@ class Hardware {
 		// Sets the steppers to tne given positions
 		void setPosition(int x, int y, int z);
 
-
+		void signal();
 
 };

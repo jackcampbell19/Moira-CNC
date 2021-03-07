@@ -45,5 +45,20 @@ void Hardware::renderCurrentScreen() {
 
 void Hardware::setScreen(Screen* screen) {
 	this->currentScreen = screen;
-	this->renderCurrentScreen();
+}
+
+
+void Hardware::signal() {
+  RotaryEncoderState state = this->rotaryEncoder.getState();
+  if (state == CW) {
+    this->currentScreen->updateSelection(1);
+  } else if (state == CCW) {
+    this->currentScreen->updateSelection(-1);
+  } else if (state == BP) {
+    Screen* s = this->currentScreen->subScreens[this->currentScreen->selection];
+    s->action(this, s);
+  } else if (state == NONE) {
+    return;
+  }
+  this->renderCurrentScreen();
 }

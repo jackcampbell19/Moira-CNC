@@ -10,12 +10,14 @@ class Screen {
 
 		char title[16]; // The title of the screen
 		int countSubScreens = 0; // The number of subscreens
+    Screen* superScreen;
 		Screen* subScreens[16]; // The array of subscreen pointers, max of 16 subscreens per screen
 		int selection = 0; // The current selection on the screen
-		void (*action)(Hardware*); // A function to execute when the screen is selected from a superscreen
+		void (*action)(Hardware*, Screen*); // A function to execute when the screen is selected from a superscreen
 
 
-		Screen(String title, void (*action)(Hardware*));
+		Screen(String title, void (*action)(Hardware*, Screen*));
 		void addSubScreen(Screen* subScreen);
+		void updateSelection(int i);
 
 };
