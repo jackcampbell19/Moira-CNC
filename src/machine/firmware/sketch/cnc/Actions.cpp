@@ -69,3 +69,35 @@ void move_x_10(Hardware* hardware, Screen* screen) {
 void move_x_1(Hardware* hardware, Screen* screen) {
 	helper_move_axis(&hardware->x, hardware, 1);
 }
+
+void move_y_500(Hardware* hardware, Screen* screen) {
+	helper_move_axis(&hardware->y, hardware, 500);
+}
+
+void move_y_100(Hardware* hardware, Screen* screen) {
+	helper_move_axis(&hardware->y, hardware, 100);
+}
+
+void move_y_10(Hardware* hardware, Screen* screen) {
+	helper_move_axis(&hardware->y, hardware, 10);
+}
+
+void move_y_1(Hardware* hardware, Screen* screen) {
+	helper_move_axis(&hardware->y, hardware, 1);
+}
+
+void move_z_500(Hardware* hardware, Screen* screen) {
+	helper_move_axis(&hardware->z, hardware, 500);
+}
+
+void move_z_100(Hardware* hardware, Screen* screen) {
+	helper_move_axis(&hardware->z, hardware, 100);
+}
+
+void move_z_10(Hardware* hardware, Screen* screen) {
+	helper_move_axis(&hardware->z, hardware, 10);
+}
+
+void move_z_1(Hardware* hardware, Screen* screen) {
+	helper_move_axis(&hardware->z, hardware, 1);
+}

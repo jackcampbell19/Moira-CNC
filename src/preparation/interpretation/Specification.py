@@ -1,14 +1,9 @@
 import json
 
-file = open('../../../config.json')
-specs = json.load(file)['specification']
-
 # Hard values
-motor_steps_per_rotation = int(specs['steps-per-rotation'])
-lead_screw_linear_motion_per_rotation = int(specs['lead-screw-linear-motion-per-rotation'])
-points_per_mm = float(specs['points-per-mm'])
-
-file.close()
+motor_steps_per_rotation = 200
+lead_screw_linear_motion_per_rotation = 8
+points_per_mm = 2.83465
 
 # Computed values
 linear_motion_per_motor_step = lead_screw_linear_motion_per_rotation / motor_steps_per_rotation  # mm

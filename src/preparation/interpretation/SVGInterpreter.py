@@ -9,7 +9,7 @@ from Specification import points_to_steps
 import sys
 
 sys.path.append('../mi')
-from CTXML import CTXML
+from MachineInstruction import MachineInstruction
 
 
 class SVGInterpreter:
@@ -207,17 +207,17 @@ class SVGInterpreter:
             self.doc.unlink()
         return None
 
-    def create_ctxml(self, path):
-        ctxml = CTXML(path)
-        ctxml.define_routine('pen-up', ['+0,+0,40'])
-        ctxml.define_routine('pen-down', ['+0,+0,0'])
-        ctxml.add_routine('pen-up')
+    def create_mi(self, path):
+        mi = MachineInstruction(path)
+        def up(): mi.append(MachineInstruction.coordinate('+0,+0,+40'))
+        def down(): mi.append(MachineInstruction.coordinate('+0,+0,0'))
+        up()
         item = self.next()
         while item:
-            ctxml.add_coordinate(f"{item[0][0]},{item[0][1]},+0")
-            ctxml.add_routine('pen-down')
+            mi.append(MachineInstruction.coordinate(f"{item[0][0]},{item[0][1]},+0"))
+            down()
             for c in item[1:]:
-                ctxml.add_coordinate(f"{c[0]},{c[1]},+0")
-            ctxml.add_routine('pen-up')
+                mi.append(MachineInstruction.coordinate(f"{c[0]},{c[1]},+0"))
+            up()
             item = self.next()
-        ctxml.close()
+        mi.build()

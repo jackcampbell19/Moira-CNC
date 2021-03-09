@@ -9,7 +9,7 @@ class Screen {
 
 		char title[16]; // The title of the screen
 		size_t countSubScreens = 0; // The number of subscreens
-		Screen* subScreens[16]; // The array of subscreen pointers, max of 16 subscreens per screen
+		Screen* subScreens[64]; // The array of subscreen pointers, max of 64 subscreens per screen
 		int selection = 0; // The current selection on the screen
 
 
