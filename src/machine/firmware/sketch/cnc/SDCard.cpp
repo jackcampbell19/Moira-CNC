@@ -22,8 +22,9 @@ void SDCard::initRoot() {
 	this->root = SD.open("/");
 }
 
-size_t SDCard::getFilenames(char filenames[16][128]) {
-	size_t count = 0;
+
+int SDCard::getFilenames(char filenames[128][16]) {
+	  int count = 0;
   	while(true) {
 		File entry =  this->root.openNextFile();
     	if (!entry)
@@ -36,42 +37,6 @@ size_t SDCard::getFilenames(char filenames[16][128]) {
     	++count;
   	}
   	return count;
-}
-
-
-/**
- * Traverses over the root and gets the filename of the '.mi' file and copies it
- * to the filename parameter. Returns true if a file is found.
-*/
-int SDCard::findMi(char* filename) {
-	// Iterate over files
-  	while(true) {
-		File entry =  this->root.openNextFile();
-    	// Break if there are no more files
-    	if (!entry) {
-      		break;
-    	}
-    	// Continue if the entry is a directory
-    	if (entry.isDirectory()) {
-      		continue;
-    	}
-    	// Get entry info
-    	char* name = entry.name();
-    	// Check file extension
-		// TODO: FIX THIS
-    	char target[] = "example.mi";
-    	if (!strcmp(name, target)) {
-    		continue;
-    	}
-    	// Copy filename
-    	strcpy(filename, name);
-    	// Close the entry
-    	entry.close();
-    	// Return true
-    	return 1;
-  	}
-	// Return false
-  	return 0;
 }
 
 

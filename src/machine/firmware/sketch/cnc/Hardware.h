@@ -4,6 +4,7 @@
 #include "TeensyStep.h"
 #include "RotaryEncoder.h"
 #include "Screen.h"
+#include "SDCard.h"
 
 /**
  * Initilizes the hardware and allows for communication to it
@@ -18,7 +19,8 @@ class Hardware {
 		Stepper y;
 		Stepper z;
 		StepControl controller;
-
+		SDCard sd;
+		
 		Screen* currentScreen;
 
 		// Constructs the hardware class
@@ -34,6 +36,8 @@ class Hardware {
 
 		// Sets the steppers to tne given positions
 		void setPosition(int x, int y, int z);
+
+		void executeInstruction(char* instruction);
 
 		void signal();
 

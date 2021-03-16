@@ -13,6 +13,7 @@ class SDCard {
 
 	File root;
 	File mi_file;
+  int hasFile = 0;
 
 	SDCard();
 	int isInserted();
@@ -20,6 +21,6 @@ class SDCard {
 	int findMi(char* filename);
 	int openMi(char* filename);
 	int getNextInstruction(char* instruction, int bufsize);
-	size_t getFilenames(char filenames[48][128]);
+	int getFilenames(char filenames[128][16]);
 
 };

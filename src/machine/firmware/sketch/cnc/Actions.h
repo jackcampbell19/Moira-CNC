@@ -20,3 +20,5 @@ void move_z_500(Hardware* hardware, Screen* screen);
 void move_z_100(Hardware* hardware, Screen* screen);
 void move_z_10(Hardware* hardware, Screen* screen);
 void move_z_1(Hardware* hardware, Screen* screen);
+void pick_file_from_sd(Hardware* hardware, Screen* screen);
+void run_file(Hardware* hardware, Screen* screen);

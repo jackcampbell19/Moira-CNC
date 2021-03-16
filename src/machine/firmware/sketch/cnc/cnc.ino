@@ -58,14 +58,20 @@ void setup() {
 			Screen* setOrigin = new Screen("Set Origin", set_origin);
 			calibrate->addSubScreen(setOrigin);
 		home->addSubScreen(calibrate);
-		Screen* selectFile = new Screen("Select File", display_screen);
-			addBackScreen(selectFile);
+		Screen* selectFile = new Screen("Select File", pick_file_from_sd);
 		home->addSubScreen(selectFile);
+    Screen* runFile = new Screen("Run File", run_file);
+    home->addSubScreen(runFile);
   
 	hardware.setScreen(home);
 	hardware.renderCurrentScreen();
 }
 
+
+/**
+ * Lifecycle: loop
+ * Continuously executes.
+*/
 void loop() {
 	hardware.signal();
 	delay(1);

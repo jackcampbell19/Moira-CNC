@@ -1,5 +1,6 @@
 #include "Hardware.h"
 #include <string.h>
+#include "MachineInstruction.h"
 
 
 Hardware::Hardware(int lcd_rs, int lcd_e, int lcd_d4, int lcd_d5, int lcd_d6, int lcd_d7, 
@@ -45,6 +46,41 @@ void Hardware::renderCurrentScreen() {
 
 void Hardware::setScreen(Screen* screen) {
 	this->currentScreen = screen;
+}
+
+
+void Hardware::setPosition(int x, int y, int z) {
+  this->x.setTargetAbs(x);
+  this->y.setTargetAbs(y);
+  this->z.setTargetAbs(z);
+  this->controller.moveAsync(this->x, this->y, this->z);
+  while (this->controller.isRunning()) {
+    delay(10);
+  }
+}
+
+
+void Hardware::executeInstruction(char* instruction) {
+	// Execute 'coordinate' instruction
+    if (instruction[0] == 'c') {
+        int x;
+        int y;
+        int z;
+        parseCoordinateInstruction(instruction, this, &x, &y, &z);
+        this->setPosition(x, y, z);
+        return;
+    }
+    // Execute 'wait' instruction
+    if (instruction[0] == 'w') {
+        int milliseconds = parseWaitInstruction(instruction);
+        delay(milliseconds);
+        return;
+    }
+    // Execute 'special' instruction
+    if (instruction[0] == 's') {
+        // TODO: implement
+        return;
+    }
 }
 
 

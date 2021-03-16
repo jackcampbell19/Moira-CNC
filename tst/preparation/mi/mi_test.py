@@ -14,8 +14,8 @@ class MITests(Test):
     name = "mi_test"
 
     def test_1_create_mi_file(self):
-        svg_location = f"{cur_dir}/../../files/7-shapes.svg"
-        mi_location = f"{cur_dir}/../../runtime/7-shapes.mi"
+        svg_location = f"{cur_dir}/../../files/shapes.svg"
+        mi_location = f"{cur_dir}/../../runtime/shapes.mi"
         interpreter = SVGInterpreter(svg_location)
         interpreter.create_mi(mi_location)
         return True

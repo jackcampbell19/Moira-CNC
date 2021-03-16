@@ -1,5 +1,3 @@
-# SVG Interpreter
-
 import math
 import numpy as np
 from svg.path import parse_path
@@ -13,42 +11,41 @@ from MachineInstruction import MachineInstruction
 
 
 class SVGInterpreter:
+    """
+    Interprets an SVG file and can generate files that can be run by the cnc.
+    """
 
-    def __init__(self, filepath, skip=0, advanced_sort=True):
-        self.doc = minidom.parse(filepath)
-        self.sample_frequency = 1
+    def __init__(self, path):
+        """
+        Initializes the SVG interpreter with the given path. During initialization the interpreter gathers the objects
+        from the SVG and sorts the objects to create an optimal tool path.
+        :param path: The path of the '.svg' file.
+        """
+        self.doc = minidom.parse(path)
         self.objects = []  # [['type', obj, 'sort-info'], ...]
-        for obj in self.doc.getElementsByTagName('line'):
-            self.objects.append(['line', obj, self.line_sort_info(obj)])
-        for obj in self.doc.getElementsByTagName('polyline') + self.doc.getElementsByTagName('polygon'):
-            self.objects.append(['polyline', obj, self.polyline_sort_info(obj)])
-        for obj in self.doc.getElementsByTagName('path'):
-            self.objects.append(['path', obj, self.path_sort_info(obj)])
-        for obj in self.doc.getElementsByTagName('rect'):
-            self.objects.append(['rect', obj, self.rect_sort_info(obj)])
-        self.objects = sorted(self.objects, key=lambda x: x[2][0])
-        if advanced_sort:
-            sorted_objects = [self.objects.pop(0)]
-            while len(self.objects) > 0:
-                i_selection = 0
-                i_length = math.inf
-                for i in range(len(self.objects)):
-                    dis = self.compute_object_distance(self.objects[i], sorted_objects[-1])
-                    if dis < i_length:
-                        i_length = dis
-                        i_selection = i
-                sorted_objects.append(self.objects.pop(i_selection))
-            self.objects = sorted_objects
-        for _ in range(skip):
-            self.objects.pop(0)
+        print("Gathering objects...", end='')
+        for elem_type in ['line', 'polyline', 'polygon', 'path', 'rect', 'circle', 'ellipse']:
+            for elem in self.doc.getElementsByTagName(elem_type):
+                self.objects.append([elem_type, elem, SVGInterpreter.get_sort_info(elem_type, elem)])
+        print("Completed.")
+        if len(self.objects) == 0:
+            print('[ERROR] No objects found.')
+            return
+        print("Optimizing object path...", end='')
+        self.sort()
+        print("Completed.")
 
-    def compute_object_distance(self, a, b):
-        x0, y0 = a[2][1]
-        x1, y1 = b[2][0]
-        return math.sqrt((x1 - x0) ** 2 + (y1 - y0) ** 2)
+    """
+    Operations
+    """
 
-    # Extracts a transform from the filedata.
-    def extract_transform(self, elem):
+    @staticmethod
+    def extract_transform(elem):
+        """
+        Extracts the transform from the element.
+        :param elem: The element to get the transform from.
+        :return: [[x, y], deg] the transform parameters.
+        """
         transform_string = elem.getAttribute('transform')
         if transform_string:
             translate = re.search(r'(?<=translate\()[0-9\-. ]+', transform_string)
@@ -64,8 +61,15 @@ class SVGInterpreter:
             return [translate, rotate]
         return None
 
-    # Applies a transform to the given x,y coordinates.
-    def apply_transform(self, x, y, transform):
+    @staticmethod
+    def apply_transform(x, y, transform):
+        """
+        Applies the transform to the given xy coordinates.
+        :param x: The x coordinate to transform.
+        :param y: The y coordinate to transform.
+        :param transform: [[x, y], deg] The transform to apply.
+        :return: (x, y) The transformed coordinate.
+        """
         if not transform:
             return x, y
         [[tx, ty], r] = transform
@@ -82,135 +86,401 @@ class SVGInterpreter:
             xy = m1.dot(xy)
         return xy[0], xy[1]
 
-    # Parse rects from a doc, returns list of tuples containing [x, y, width, height]
-    # for each rect adjusted from points to steps.
-    def parse_rect(self, elem):
+    @staticmethod
+    def transform(elem, points):
+        """
+        Transforms a list of points with the given transform and then translates the points to steps.
+        :param elem: The element to get the transform from.
+        :param points: The list of points to transform.
+        :return: The list of transformed and translated points.
+        """
+        transform = SVGInterpreter.extract_transform(elem)
+        points = [SVGInterpreter.apply_transform(a, b, transform) for (a, b) in points]
+        return [(points_to_steps(a), points_to_steps(b)) for (a, b) in points]
+
+    """
+    Helper methods.
+    """
+
+    def pop_object_minimizing_condition(self, condition):
+        """
+        Pops the objects that minimizes the condition given.
+        :param condition: The condition.
+        :return: The element the meets the condition.
+        """
+        sel = 0
+        cur = math.inf
+        for i in range(len(self.objects)):
+            val = condition(self.objects[i][2])
+            if val < cur:
+                sel = i
+                cur = val
+        return self.objects.pop(sel)
+
+    def sort(self):
+        """
+        Sorts the objects listed in self.objects to optimize the tool path.
+        :return: None.
+        """
+        sorted_objects = [self.pop_object_minimizing_condition(lambda o: SVGInterpreter.distance((0, 0), o[0]))]
+        while len(self.objects) > 0:
+            sorted_objects.append(
+                self.pop_object_minimizing_condition(lambda o: SVGInterpreter.distance(sorted_objects[-1][2][1], o[0]))
+            )
+        self.objects = sorted_objects
+
+    @staticmethod
+    def distance(a, b):
+        """
+        Computes the distance between 2 points.
+        :param a: Point.
+        :param b: Point.
+        :return: The distance between them.
+        """
+        x0, y0 = a
+        x1, y1 = b
+        return math.sqrt((x1 - x0) ** 2 + (y1 - y0) ** 2)
+
+    @staticmethod
+    def compute_arc_point(origin, radius, deg):
+        """
+        Computes the point on an arc. Draws a line of length radius from the origin rotated by deg and returns the
+        point at the end of the line.
+        :param origin: The origin.
+        :param radius: The radius.
+        :param deg: The rotation deg amount.
+        :return: The point.
+        """
+        origin = np.array(origin)
+        point = np.array([0, -radius])
+        theta = deg * (math.pi / 180.0)
+        point = np.dot(point, np.array([
+            [math.cos(theta), -math.sin(theta)],
+            [math.sin(theta), math.cos(theta)]
+        ]))
+        point = point + origin
+        return point[0], point[1]
+
+    @staticmethod
+    def compute_arc(origin, radius, start_deg, end_deg, samples):
+        """
+        Computes an arc between two degrees on a circle.
+        :param origin: The origin of the circle.
+        :param radius: The radius of the circle.
+        :param start_deg: The degree to start at.
+        :param end_deg: The degree to end at.
+        :param samples: The number of samples to take to build the arc.
+        :return: List of points that make up the arc.
+        """
+        points = []
+        for x in range(int(samples)):
+            p = x / samples
+            deg = start_deg + (p * (end_deg - start_deg))
+            point = SVGInterpreter.compute_arc_point(origin, radius, deg)
+            if len(points) > 0 and points[-1] == point:
+                continue
+            points.append(point)
+        return points
+
+    @staticmethod
+    def estimate_path_length(e):
+        """
+        Estimates the length of a path. This is used in place of more accurate calculations in order to save
+        computational time. Computing the path length is done by taking the sum of the distance between a fixed
+        number of samples points along the path.
+        :param e: The path object.
+        :return: The estimated length of the path.
+        """
+        length = 0
+        estimate_frequency = 1000
+        for i in range(estimate_frequency):
+            p0 = e.point(1 / estimate_frequency * i)
+            x0, y0 = p0.real, p0.imag
+            p1 = e.point(1 / estimate_frequency * (i + 1))
+            x1, y1 = p1.real, p1.imag
+            length += math.sqrt((x1 - x0) ** 2 + (y1 - y0) ** 2)
+        return length
+
+    """
+    Get appropriate properties from the element.
+    """
+
+    @staticmethod
+    def get_line_info(elem):
+        """
+        Gets the line attributes from an element.
+        :param elem: The element.
+        :return: The line attributes.
+        """
+        x1 = float(elem.getAttribute('x1'))
+        y1 = float(elem.getAttribute('y1'))
+        x2 = float(elem.getAttribute('x2'))
+        y2 = float(elem.getAttribute('y2'))
+        return x1, y1, x2, y2
+
+    @staticmethod
+    def get_polyline_info(elem):
+        """
+        Gets the attributes from a polyline element.
+        :param elem: The element.
+        :return: List of points.
+        """
+        return [float(x) for x in elem.getAttribute('points').split(' ')]
+
+    @staticmethod
+    def get_rect_info(elem):
+        """
+        Gets the attributes from a rect element.
+        :param elem: The element.
+        :return: The rect attributes.
+        """
         x = float(elem.getAttribute('x'))
         y = float(elem.getAttribute('y'))
         width = float(elem.getAttribute('width'))
         height = float(elem.getAttribute('height'))
-        x0, y0 = x, y
-        x1, y1 = x + width, y
-        x2, y2 = x + width, y + height
-        x3, y3 = x, y + height
-        transform = self.extract_transform(elem)
-        x0, y0 = self.apply_transform(x0, y0, transform)
-        x1, y1 = self.apply_transform(x1, y1, transform)
-        x2, y2 = self.apply_transform(x2, y2, transform)
-        x3, y3 = self.apply_transform(x3, y3, transform)
-        x0, y0 = points_to_steps(x0), points_to_steps(y0)
-        x1, y1 = points_to_steps(x1), points_to_steps(y1)
-        x2, y2 = points_to_steps(x2), points_to_steps(y2)
-        x3, y3 = points_to_steps(x3), points_to_steps(y3)
-        return [(x0, y0), (x1, y1), (x2, y2), (x3, y3), (x0, y0)]
+        rx = elem.getAttribute('rx')
+        if rx is not None and rx.isnumeric():
+            rx = float(rx)
+        else:
+            rx = None
+        return x, y, width, height, rx
 
-    # Parse paths from a doc, returns list of tuples containing [x, y]
-    # for each point on the path adjusted from points to steps.
-    def parse_path(self, elem):
-        pd = elem.getAttribute('d')
-        transform = self.extract_transform(elem)
-        path = parse_path(pd)
-        element_path = []
+    @staticmethod
+    def get_path_info(elem):
+        """
+        Gets the attributes from a path element.
+        :param elem: The element.
+        :return: The path attributes.
+        """
+        return parse_path(elem.getAttribute('d'))
+
+    @staticmethod
+    def get_circle_info(elem):
+        """
+        Gets the attributes from a circle element.
+        :param elem: The element.
+        :return: The origin and radius.
+        """
+        origin = np.array([
+            float(elem.getAttribute('cx')),
+            float(elem.getAttribute('cy'))
+        ])
+        radius = float(elem.getAttribute('r'))
+        return origin, radius
+
+    @staticmethod
+    def get_ellipse_info(elem):
+        """
+        Gets the attributes from an ellipse element.
+        :param elem: The element.
+        :return: The ellipse attributes.
+        """
+        cx = float(elem.getAttribute('cx'))
+        cy = float(elem.getAttribute('cy'))
+        rx = float(elem.getAttribute('rx'))
+        ry = float(elem.getAttribute('ry'))
+        return cx, cy, rx, ry
+
+    """
+    Parse methods.
+    Each parse method operates on the raw point data from the element and returns a list of point tuples.
+    """
+
+    @staticmethod
+    def parse_line(elem):
+        """
+        Parses a line.
+        :param elem: The element.
+        :return: List of point tuples.
+        """
+        x1, y1, x2, y2 = SVGInterpreter.get_line_info(elem)
+        return [(x1, y1), (x2, y2)]
+
+    @staticmethod
+    def parse_polyline(elem):
+        """
+        Parses a polyline.
+        :param elem: The element.
+        :return: List of point tuples.
+        """
+        raw_points = SVGInterpreter.get_polyline_info(elem)
+        return [(raw_points[i], raw_points[i + 1]) for i in range(0, len(raw_points) - 1, 2)]
+
+    @staticmethod
+    def parse_rect(elem):
+        """
+        Parses a rectangle.
+        :param elem: The element.
+        :return: List of point tuples.
+        """
+        x, y, width, height, rx = SVGInterpreter.get_rect_info(elem)
+        points = []
+        if rx is not None:
+            t0x, t0y = x + rx, y
+            t1x, t1y = x + width - rx, y
+            r0x, r0y = x + width, y + rx
+            r1x, r1y = x + width, y + height - rx
+            b0x, b0y = x + width - rx, y + height
+            b1x, b1y = x + rx, y + height
+            l0x, l0y = x, y + height - rx
+            l1x, l1y = x, y + rx
+            points += [(t0x, t0y), (t1x, t1y)]
+            samples = 2 * rx * math.pi
+            points += SVGInterpreter.compute_arc((x + width - rx, y + rx), rx, -1, -90, samples)
+            points += [(r0x, r0y), (r1x, r1y)]
+            points += SVGInterpreter.compute_arc((x + width - rx, y + height - rx), rx, -91, -180, samples)
+            points += [(b0x, b0y), (b1x, b1y)]
+            points += SVGInterpreter.compute_arc((x + rx, y + height - rx), rx, -181, -270, samples)
+            points += [(l0x, l0y), (l1x, l1y)]
+            points += SVGInterpreter.compute_arc((x + rx, y + rx), rx, -271, -360, samples)
+            points += [(t0x, t0y)]
+        else:
+            x0, y0 = x, y
+            x1, y1 = x + width, y
+            x2, y2 = x + width, y + height
+            x3, y3 = x, y + height
+            points += [(x0, y0), (x1, y1), (x2, y2), (x3, y3), (x0, y0)]
+        return points
+
+    @staticmethod
+    def parse_path(elem):
+        """
+        Parses a path.
+        :param elem: The element.
+        :return: List of point tuples.
+        """
+        path = SVGInterpreter.get_path_info(elem)
+        points = []
         for e in path:
-            length = 0
-            estimate_frequency = 1000
-            for i in range(estimate_frequency):
-                p0 = e.point(1 / estimate_frequency * i)
-                x0, y0 = p0.real, p0.imag
-                p1 = e.point(1 / estimate_frequency * (i + 1))
-                x1, y1 = p1.real, p1.imag
-                length += math.sqrt((x1 - x0) ** 2 + (y1 - y0) ** 2)
+            length = SVGInterpreter.estimate_path_length(e)
             if length == 0:
                 continue
-            samples = int(math.ceil(length * self.sample_frequency))  # e.length() is significantly more intensive
-            sampled_path = []
+            samples = int(math.ceil(length))  # e.length() is significantly more intensive
             for i in range(samples + 1):
                 p0 = e.point(1 / samples * i)
-                x0, y0 = p0.real, p0.imag
-                x0, y0 = self.apply_transform(x0, y0, transform)
-                x0, y0 = points_to_steps(x0), points_to_steps(y0)
-                sampled_path.append((x0, y0))
-            element_path += sampled_path
-        if len(element_path) > 0:
-            return element_path
+                points.append((p0.real, p0.imag))
+        if len(points) > 0:
+            return points
         return []
 
-    def parse_polyline(self, elem):
-        pnts = elem.getAttribute('points').split(' ')
-        transform = self.extract_transform(elem)
-        pnts = [float(x) for x in pnts]
+    @staticmethod
+    def parse_circle(elem):
+        """
+        Parses a circle.
+        :param elem: The element.
+        :return: List of point tuples.
+        """
+        origin, radius = SVGInterpreter.get_circle_info(elem)
+        circumference = 2 * math.pi * radius
+        samples = math.ceil(circumference / 2)
+        return SVGInterpreter.compute_arc(origin, radius, 0, 361, samples)
+
+    @staticmethod
+    def parse_ellipse(elem):
+        """
+        Parses an ellipse.
+        :param elem: The element.
+        :return: List of point tuples.
+        """
+        # cx, cy, rx, ry = SVGInterpreter.get_ellipse_info(elem)
+        cx, cy, rx, ry = 1000, 1000, 800, 400
         points = []
-        for i in range(0, len(pnts) - 1, 2):
-            x0, y0 = pnts[i], pnts[i + 1]
-            x0, y0 = self.apply_transform(x0, y0, transform)
-            points.append(
-                (
-                    points_to_steps(x0),
-                    points_to_steps(y0)
-                )
-            )
+        origin = (cx, cy)
+        samples = 500
+        for x in range(samples):
+            deg = x / samples * 361.0
+            s = (deg % 90) / 90.0
+            if 90 < deg < 180 or 270 < deg < 360:
+                s = 1 - s
+            r = rx * s + ry * (1 - s)
+            points.append(SVGInterpreter.compute_arc_point(origin, r, deg))
         return points
 
-    def parse_line(self, elem):
-        l = [(points_to_steps(elem.getAttribute('x1')), points_to_steps(elem.getAttribute('y1'))),
-             (points_to_steps(elem.getAttribute('x2')), points_to_steps(elem.getAttribute('y2')))]
-        return l
+    """
+    Sort info.
+    """
 
-    def rect_sort_info(self, elem):
-        points = self.parse_rect(elem)
-        return [points[0], points[-1]]
+    @staticmethod
+    def get_sort_info(elem_type, elem):
+        """
+        Returns an array of 2 tuples giving sort information for the given element.
+        :param elem_type: The type of the element (ex. circle, rect, line...).
+        :param elem: The element.
+        :return: [(float, float), (float, float)]
+        """
+        if elem_type == 'line':
+            return SVGInterpreter.parse_line(elem)
+        if elem_type == 'rect':
+            x, y, _, _, _ = SVGInterpreter.get_rect_info(elem)
+            return [(x, y), (x, y)]
+        if elem_type == 'circle':
+            origin, radius = SVGInterpreter.get_circle_info(elem)
+            point = SVGInterpreter.compute_arc_point(origin, radius, 0)
+            return [point, point]
+        if elem_type == 'path':
+            path = SVGInterpreter.get_path_info(elem)
+            p0 = path[0].point(0)
+            x0, y0 = p0.real, p0.imag
+            p1 = path[-1].point(1)
+            x1, y1 = p1.real, p1.imag
+            return [(x0, y0), (x1, y1)]
+        if elem_type == 'polyline' or elem_type == 'polygon':
+            points = SVGInterpreter.get_polyline_info(elem)
+            return [(points[0], points[1]), (points[-2], points[-1])]
+        if elem_type == 'ellipse':
+            cx, cy, _, _ = SVGInterpreter.get_ellipse_info(elem)
+            return [(cx, cy), (cx, cy)]
+        print(f"[ERROR] Sort info not found for type {elem_type}")
+        return [(0, 0), (0, 0)]
 
-    def path_sort_info(self, elem):
-        pd = elem.getAttribute('d')
-        transform = self.extract_transform(elem)
-        path = parse_path(pd)
-        p0 = path[0].point(0)
-        x0, y0 = p0.real, p0.imag
-        p1 = path[-1].point(1)
-        x1, y1 = p1.real, p1.imag
-        x0, y0 = self.apply_transform(x0, y0, transform)
-        x1, y1 = self.apply_transform(x1, y1, transform)
-        return [(points_to_steps(x0), points_to_steps(y0)), (points_to_steps(x1), points_to_steps(y1))]
+    """
+    Iteration
+    """
 
-    def line_sort_info(self, elem):
-        return self.parse_line(elem)
-
-    def polyline_sort_info(self, elem):
-        pnts = elem.getAttribute('points').split(' ')
-        transform = self.extract_transform(elem)
-        pnts = [float(x) for x in pnts]
-        points = []
-        for i in [0, len(points) - 2]:
-            x0, y0 = pnts[i], pnts[i + 1]
-            x0, y0 = self.apply_transform(x0, y0, transform)
-            points.append(
-                (
-                    points_to_steps(x0),
-                    points_to_steps(y0)
-                )
-            )
-        return points
-
-    # Gets the next item
     def next(self):
+        """
+        Parses the next item.
+        :return: The list of points from the item.
+        """
         if len(self.objects) > 0:
-            obj = self.objects.pop(0)
-            if obj[0] == 'line':
-                return self.parse_line(obj[1])
-            if obj[0] == 'polyline':
-                return self.parse_polyline(obj[1])
-            if obj[0] == 'path':
-                return self.parse_path(obj[1])
-            if obj[0] == 'rect':
-                return self.parse_rect(obj[1])
+            elem_type, elem, _ = self.objects.pop(0)
+            points = []
+            if elem_type == 'line':
+                points = SVGInterpreter.parse_line(elem)
+            if elem_type == 'polyline' or elem_type == 'polygon':
+                points = SVGInterpreter.parse_polyline(elem)
+            if elem_type == 'path':
+                points = SVGInterpreter.parse_path(elem)
+            if elem_type == 'rect':
+                points = SVGInterpreter.parse_rect(elem)
+            if elem_type == 'circle':
+                points = SVGInterpreter.parse_circle(elem)
+            if len(points) == 0:
+                return self.next()
+            return SVGInterpreter.transform(elem, points)
         else:
             self.doc.unlink()
         return None
 
+    """
+    Creates a '.mi' file from the SVG.
+    """
+
     def create_mi(self, path):
+        """
+        Creates an '.mi' file from the SVG.
+        :param path: The output path.
+        :return: None.
+        """
+        print("Parsing objects for '.mi' file...", end='')
         mi = MachineInstruction(path)
-        def up(): mi.append(MachineInstruction.coordinate('+0,+0,+40'))
-        def down(): mi.append(MachineInstruction.coordinate('+0,+0,0'))
+
+        def up():
+            mi.append(MachineInstruction.coordinate('+0,+0,+40'))
+
+        def down():
+            mi.append(MachineInstruction.coordinate('+0,+0,0'))
+
         up()
         item = self.next()
         while item:
@@ -220,4 +490,6 @@ class SVGInterpreter:
                 mi.append(MachineInstruction.coordinate(f"{c[0]},{c[1]},+0"))
             up()
             item = self.next()
+        print("Completed.")
         mi.build()
+        print("Generated '.mi' file.")
