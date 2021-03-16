@@ -15,25 +15,36 @@ class SVGInterpreter:
     Interprets an SVG file and can generate files that can be run by the cnc.
     """
 
-    def __init__(self, path):
+    def __init__(self, path, verbose=False):
         """
         Initializes the SVG interpreter with the given path. During initialization the interpreter gathers the objects
         from the SVG and sorts the objects to create an optimal tool path.
         :param path: The path of the '.svg' file.
         """
+        self.verbose = verbose
         self.doc = minidom.parse(path)
         self.objects = []  # [['type', obj, 'sort-info'], ...]
-        print("Gathering objects...", end='')
+        self.log("Gathering objects...", end='')
         for elem_type in ['line', 'polyline', 'polygon', 'path', 'rect', 'circle', 'ellipse']:
             for elem in self.doc.getElementsByTagName(elem_type):
                 self.objects.append([elem_type, elem, SVGInterpreter.get_sort_info(elem_type, elem)])
-        print("Completed.")
+        self.log("Completed.")
         if len(self.objects) == 0:
-            print('[ERROR] No objects found.')
+            self.log('[ERROR] No objects found.')
             return
-        print("Optimizing object path...", end='')
+        self.log("Optimizing object path...", end='')
         self.sort()
-        print("Completed.")
+        self.log("Completed.")
+
+    def log(self, s, end=None):
+        """
+        Logs a statement.
+        """
+        if self.verbose:
+            if end:
+                print(s, end=end)
+            else:
+                print(s)
 
     """
     Operations
@@ -430,7 +441,6 @@ class SVGInterpreter:
         if elem_type == 'ellipse':
             cx, cy, _, _ = SVGInterpreter.get_ellipse_info(elem)
             return [(cx, cy), (cx, cy)]
-        print(f"[ERROR] Sort info not found for type {elem_type}")
         return [(0, 0), (0, 0)]
 
     """
@@ -472,7 +482,7 @@ class SVGInterpreter:
         :param path: The output path.
         :return: None.
         """
-        print("Parsing objects for '.mi' file...", end='')
+        self.log("Parsing objects for '.mi' file...", end='')
         mi = MachineInstruction(path)
 
         def up():
@@ -490,6 +500,6 @@ class SVGInterpreter:
                 mi.append(MachineInstruction.coordinate(f"{c[0]},{c[1]},+0"))
             up()
             item = self.next()
-        print("Completed.")
+        self.log("Completed.")
         mi.build()
-        print("Generated '.mi' file.")
+        self.log("Generated '.mi' file.")

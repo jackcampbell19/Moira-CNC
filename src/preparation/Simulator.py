@@ -9,7 +9,7 @@ class Simulator:
     def __init__(self, path):
         self.path = path
 
-    def run(self):
+    def run(self, time, verbose=False):
         plt.figure(figsize=(8, 8))
         plt.ion()
         coordinates = [[0, 0, 0]]
@@ -38,9 +38,6 @@ class Simulator:
                 travel += math.sqrt((x1 - x0) ** 2 + (y1 - y0) ** 2)
             plt.plot([x0, x1], [y0, y1], 'b-' if (coordinates[i + 1][2] == 0 and coordinates[i][2] == 0) else 'r-')
         plt.draw()
-        print(f"Travel distance: {travel}")
-        plt.pause(100)
-
-
-s = Simulator("../../tst/runtime/shapes.mi")
-s.run()
+        if verbose:
+            print(f"Travel distance: {travel}")
+        plt.pause(time)

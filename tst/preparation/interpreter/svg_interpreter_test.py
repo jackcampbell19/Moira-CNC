@@ -6,14 +6,13 @@ sys.path.append(f"{cur_dir}/../../../src/preparation/mi")
 sys.path.append(f"{cur_dir}/../../../src/preparation/interpretation")
 sys.path.append(f"{cur_dir}/../..")
 from Test import Test
-from MachineInstruction import MachineInstruction
 from SVGInterpreter import SVGInterpreter
 
 
-class MITests(Test):
+class SVGTest(Test):
 
     name = "mi_test"
 
 
 if __name__ == '__main__':
-    MITests().run_tests()
+    SVGTest().run_tests()
