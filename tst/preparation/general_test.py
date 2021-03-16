@@ -20,7 +20,15 @@ class GeneralTest(Test):
         mi_location = f"{cur_dir}/../runtime/shapes.mi"
         interpreter = SVGInterpreter(svg_location)
         interpreter.create_mi(mi_location)
-        Simulator(mi_location).run(2)
+        Simulator(mi_location).run(50)
+        return True
+
+    def test_2_create_mi_unverified(self):
+        svg_location = f"{cur_dir}/../files/mplex.svg"
+        mi_location = f"{cur_dir}/../runtime/mplex.mi"
+        interpreter = SVGInterpreter(svg_location)
+        interpreter.create_mi(mi_location)
+        Simulator(mi_location).run(50)
         return True
 
 

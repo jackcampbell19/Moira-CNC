@@ -393,8 +393,7 @@ class SVGInterpreter:
         :param elem: The element.
         :return: List of point tuples.
         """
-        # cx, cy, rx, ry = SVGInterpreter.get_ellipse_info(elem)
-        cx, cy, rx, ry = 1000, 1000, 800, 400
+        cx, cy, rx, ry = SVGInterpreter.get_ellipse_info(elem)
         points = []
         origin = (cx, cy)
         samples = 500
@@ -465,6 +464,8 @@ class SVGInterpreter:
                 points = SVGInterpreter.parse_rect(elem)
             if elem_type == 'circle':
                 points = SVGInterpreter.parse_circle(elem)
+            if elem_type == 'ellipse':
+                points = SVGInterpreter.parse_ellipse(elem)
             if len(points) == 0:
                 return self.next()
             return SVGInterpreter.transform(elem, points)
