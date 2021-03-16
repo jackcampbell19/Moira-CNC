@@ -1,4 +1,5 @@
 **/.DS_Store
 .idea
 .vscode/
+tst/generated-files/
 **/__pycache__

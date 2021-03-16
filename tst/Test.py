@@ -10,6 +10,7 @@ class Test:
 
     def run_tests(self):
         print(f"[{self.name}] Running...")
+        eval(f"self.before")()
         tests = [self.run_test(eval(f"self.{name}"), name) for name in dir(self) if name.startswith('test')]
         print(f"[{self.name}] Completed: {sum(tests)}/{len(tests)} tests passed.")
 
