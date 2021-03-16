@@ -5,14 +5,18 @@ from xml.dom import minidom
 import re
 from Specification import points_to_steps
 import sys
+import inspect
+import os
 
-sys.path.append('../mi')
+cur_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+
+sys.path.append(f"{cur_dir}/../mi")
 from MachineInstruction import MachineInstruction
 
 
 class SVGInterpreter:
     """
-    Interprets an SVG file and can generate files that can be run by the cnc.
+    Interprets an SVG file and can generate static-files that can be run by the cnc.
     """
 
     def __init__(self, path, verbose=False):

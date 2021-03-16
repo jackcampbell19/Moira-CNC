@@ -30,6 +30,3 @@ class Verification:
                     print(f"'{instruction}' contains bad arguments.")
                     return False
         return True
-
-
-print(f"File returned {Verification.verify('../../tst/runtime/7-shapes.mi')}")
